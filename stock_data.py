@@ -2,21 +2,34 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import time
 
 
 def fetch_price_history(ticker: str, period: str = "1y") -> pd.DataFrame:
     """Fetch OHLCV data for a ticker. Returns empty DataFrame on failure."""
-    try:
-        data = yf.download(ticker, period=period, progress=False, auto_adjust=True)
-        if data is None or data.empty:
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            data = yf.download(ticker, period=period, progress=False, auto_adjust=True)
+            if data is None or data.empty:
+                return pd.DataFrame()
+            # Flatten MultiIndex columns if present
+            if isinstance(data.columns, pd.MultiIndex):
+                data.columns = data.columns.get_level_values(0)
+            return data
+        except Exception as e:
+            error_msg = str(e)
+            if "Rate limited" in error_msg or "Too Many Requests" in error_msg:
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) * 5  # Exponential backoff: 5s, 10s, 20s
+                    print(f"[!] Rate limited for {ticker}. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    print(f"[!] Rate limit error fetching {ticker} after {max_retries} attempts: {e}")
+            else:
+                print(f"[!] Error fetching {ticker}: {e}")
             return pd.DataFrame()
-        # Flatten MultiIndex columns if present
-        if isinstance(data.columns, pd.MultiIndex):
-            data.columns = data.columns.get_level_values(0)
-        return data
-    except Exception as e:
-        print(f"[!] Error fetching {ticker}: {e}")
-        return pd.DataFrame()
 
 
 def compute_moving_average(series: pd.Series, window: int) -> pd.Series:
@@ -103,12 +116,25 @@ def get_technical_indicators(df: pd.DataFrame) -> dict:
 
 def get_info(ticker: str) -> dict:
     """Return yfinance .info dict, falling back to {} on error."""
-    try:
-        t = yf.Ticker(ticker)
-        info = t.info or {}
-        return info
-    except Exception:
-        return {}
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            t = yf.Ticker(ticker)
+            info = t.info or {}
+            return info
+        except Exception as e:
+            error_msg = str(e)
+            if "Rate limited" in error_msg or "Too Many Requests" in error_msg:
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) * 5  # Exponential backoff: 5s, 10s, 20s
+                    print(f"[!] Rate limited for {ticker} info. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    print(f"[!] Rate limit error fetching {ticker} info after {max_retries} attempts")
+            else:
+                print(f"[!] Error fetching {ticker} info: {e}")
+            return {}
 
 
 def format_inr(value) -> str:

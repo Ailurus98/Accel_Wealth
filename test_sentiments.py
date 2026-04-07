@@ -1,5 +1,7 @@
 from scrapper import DataIngestionLayer
 from analyzer import SentimentAnalyzer
+import schedule
+import time
 
 
 def run_sentiment_check(ticker):
@@ -49,6 +51,24 @@ def run_sentiment_check(ticker):
     print(f"{'=' * 40}")
 
 
+def scheduled_task():
+    # Default ticker - you can change this or make it configurable
+    ticker = "TSLA"
+    print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Starting scheduled sentiment check for {ticker}")
+    run_sentiment_check(ticker)
+
+
 if __name__ == "__main__":
-    target = input("Enter Ticker (e.g., TSLA): ").upper()
-    run_sentiment_check(target)
+    # Schedule the task to run every 10 hours
+    schedule.every(10).hours.do(scheduled_task)
+
+    print("Scheduler started. Sentiment analysis will run every 10 hours.")
+    print("Press Ctrl+C to stop.")
+
+    # Run immediately on start
+    scheduled_task()
+
+    # Keep the script running
+    while True:
+        schedule.run_pending()
+        time.sleep(60)  # Check every minute

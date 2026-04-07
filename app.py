@@ -587,7 +587,7 @@ with st.sidebar:
         active = st.session_state.period == pkey
         with p_cols[i % 3]:
             label = f"• {plabel}" if active else plabel
-            if st.button(label, key=f"_p_{pkey}", use_container_width=True):
+            if st.button(label, key=f"_p_{pkey}", width='stretch'):
                 st.session_state.period = pkey
                 st.rerun()
 
@@ -913,7 +913,7 @@ def page_dashboard():
     _section("📈 Price Chart")
     st.markdown('<div class="sw-chart-wrap">', unsafe_allow_html=True)
     fig = build_chart(df, indicators)
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig, width='stretch', config={"displayModeBar": False})
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -949,7 +949,7 @@ def page_chart():
 
     st.markdown('<div class="sw-chart-wrap">', unsafe_allow_html=True)
     fig = build_chart(df, indicators)
-    st.plotly_chart(fig, use_container_width=True, config={
+    st.plotly_chart(fig, width='stretch', config={
         "displayModeBar": True,
         "modeBarButtonsToRemove": ["toImage", "sendDataToCloud", "select2d", "lasso2d"],
         "displaylogo": False,
