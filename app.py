@@ -889,7 +889,8 @@ def page_dashboard():
 
     # Score: days above MA50
     score_html = ""
-    if "MA50" in indicators and n_pts := len(close):
+    n_pts = len(close)
+    if "MA50" in indicators and n_pts:
         ma50 = indicators["MA50"].dropna()
         if len(ma50):
             ratio = (close[-len(ma50):] > ma50).mean()
